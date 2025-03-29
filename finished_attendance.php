@@ -30,7 +30,7 @@ if (isset($_GET['del'])) {
     <div class="container mx-auto p-4">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold">STUDENT ATTENDED TODAY</h3>
-            <a href="homepage.php" class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+            <a href="index.php" class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Homepage
             </a>
         </div>
