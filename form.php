@@ -1,115 +1,244 @@
+<?php
+require_once 'database/logs.php';
+stayIndex();
+$loggedInStudentId = $_SESSION['student_id'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Submit Attendance</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .transition-transform {
-            transition: transform 0.3s ease-in-out;
-        }
-
         .shadow-text {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+
+            color: #1f2937;
         }
 
         .form-shadow {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+
+        }
+
+        .fixed-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+
+
+        }
+
+        body {
+            padding-top: 80px;
+
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+
+                width: 100%;
+
+                position: absolute;
+                top: 100%;
+
+                left: 0;
+                background-color: white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-links.active {
+                display: block;
+
+            }
+
+            .nav-links a {
+                display: block;
+
+                padding: 0.75rem 1rem;
+
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
         }
     </style>
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 overflow-hidden">
-    <div class="flex justify-end p-4">
-        <div class="relative">
-            <button id="dropdownButton" class="px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                </svg>
-            </button>
-            <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 transition-transform transform -translate-y-2">
-                <a href="form.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Home</a>
-                <a href="attendancechecker.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Check Attendance</a>
-                <a href="index.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Log-out</a>
+<body class="bg-gray-300" style="font-family: 'Roboto', Arial, sans-serif;">
+
+    <nav class="bg-white shadow fixed-nav">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-3 relative">
+                <div class="flex items-center space-x-3">
+                    <img src="pic/logo.jpg" alt="Logo" class="w-10 h-10 rounded-full shadow-sm object-cover">
+                    <div class="text-lg font-bold text-gray-800 hidden sm:block">
+                        Attendance Checker
+                    </div>
+                </div>
+
+                <div class="hidden md:flex space-x-4 nav-links" id="navLinks">
+                    <a href="attendanceStudent.php" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Today's Attendance</a>
+                    <a href="database/logout.php" class="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium">Log Out</a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="flex flex-col justify-center items-center h-screen px-4 sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-gray-800 rounded-lg px-6 py-8 shadow-2xl ring-2 ring-gray-900/10 max-w-md w-full space-y-8 form-shadow">
-            <div class="mb-6">
-                <h1 class="text-3xl font-bold text-center shadow-text">ATTENDANCE CHECKER</h1>
+    </nav>
+
+    <main class="flex flex-col items-center justify-start px-6 pt-2 pb-10">
+
+        <div class="w-full max-w-md text-center text-gray-600">
+            <span id="date-time" class="text-sm"></span>
+        </div>
+
+        <div class="bg-white rounded-lg px-6 py-8 shadow-xl ring-1 ring-gray-900/5 w-full max-w-md space-y-6 form-shadow my-3">
+            <div class="mb-5">
+                <h1 class="text-2xl font-bold text-center shadow-text text-gray-800">ATTEND TODAY</h1>
             </div>
-            <form id="userForm" class="space-y-6">
+            <form id="userForm" class="space-y-5">
                 <div>
-                    <label for="fname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-                    <input type="text" name="fname" id="fname" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm">
+                    <label for="student_id_attendance" class="block text-sm font-medium text-gray-700">Student ID</label>
+                    <input type="text" name="student_id" id="student_id_attendance" pattern="\d{8}" maxlength="8"
+                        value="<?php echo htmlspecialchars($loggedInStudentId); ?>" readonly
+                        placeholder="e.g., 20030315"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md shadow-sm focus:outline-none sm:text-sm cursor-not-allowed" />
                 </div>
+
                 <div>
-                    <label for="lname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-                    <input type="text" name="lname" id="lname" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm">
+                    <label for="fname" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" id="fname" name="fname"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                        placeholder="Enter your first name">
                 </div>
+
                 <div>
-                    <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID</label>
-                    <input type="text" name="student_id" id="student_id" required pattern="\d{8}" maxlength="8" placeholder="20030315" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm">
+                    <label for="lname" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" id="lname" name="lname"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                        placeholder="Enter your last name">
                 </div>
-                <div class="flex justify-between">
-                    <input type="submit" value="Submit" class="px-6 py-3 bg-green-500 text-white rounded-md shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <input type="reset" value="Reset" class="px-6 py-3 bg-red-500 text-white rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+
+                <div>
+                    <label for="section" class="block text-sm font-medium text-gray-700">Section</label>
+                    <select id="section" name="section"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="" selected disabled>Select your section</option>
+
+                        <option value="2A">2A</option>
+                        <option value="2B">2B</option>
+                        <option value="2C">2C</option>
+                        <option value="2D">2D</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-between space-x-3 pt-3">
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">Submit</button>
+                    <button type="reset" id="resetButton" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">Reset</button>
                 </div>
             </form>
         </div>
-    </div>
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <?php require_once 'database/time.php'; ?>
 
     <script>
         $(document).ready(function() {
-            $('#dropdownButton').click(function() {
-                $('#dropdownMenu').toggleClass('hidden');
-                $('#dropdownMenu').toggleClass('translate-y-0');
+            $('#resetButton').on('click', function() {
+                $('#userForm')[0].reset();
+                $('#student_id_attendance').val('<?php echo htmlspecialchars($loggedInStudentId); ?>');
+                $('#section').val("");
             });
 
             $('#userForm').submit(function(e) {
                 e.preventDefault();
 
-                let fname = $('#fname').val().trim();
-                let lname = $('#lname').val().trim();
-                let student_id = $('#student_id').val().trim();
+                const student_id = $('#student_id_attendance').val().trim();
+                const section = $('#section').val();
+                const fname = $('#fname').val().trim();
+                const lname = $('#lname').val().trim();
 
-                if (!fname || !lname || !student_id) {
-                    alert("All fields are required!");
+                if (!student_id || !section || !fname || !lname) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'warning',
+                        title: 'Fields required',
+                        showConfirmButton: false,
+                        timer: 1000,
+                        timerProgressBar: true,
+                    });
                     return;
                 }
 
-                const frm = new FormData();
-                frm.append("method", "saveUser");
-                frm.append("fname", fname);
-                frm.append("lname", lname);
-                frm.append("student_id", student_id);
+                const checkFrm = new FormData();
+                checkFrm.append("method", "checkSection");
+                checkFrm.append("student_id", student_id);
+                checkFrm.append("section", section);
 
-                axios.post("handler.php", frm)
-                    .then(function(response) {
-                        if (response.data.ret == 1) {
+                axios.post("database/handler.php", checkFrm)
+                    .then(function(checkResponse) {
+
+                        if (checkResponse.data.ret == 1) {
+
+                            const saveFrm = new FormData();
+                            saveFrm.append("method", "saveUser");
+                            saveFrm.append("student_id", student_id);
+                            saveFrm.append("fname", fname);
+                            saveFrm.append("lname", lname);
+                            saveFrm.append("section", section);
+
+                            axios.post("database/handler.php", saveFrm)
+                                .then(function(saveResponse) {
+                                    if (saveResponse.data.ret == 1) {
+                                        Swal.fire({
+                                            icon: "success",
+                                            title: "Attendance Submitted!",
+                                            text: "Your attendance has been recorded successfully.",
+                                            showConfirmButton: false,
+                                            timer: 1000,
+                                            timerProgressBar: true
+                                        }).then(() => {
+
+                                            window.location.href = "attendanceStudent.php";
+                                        });
+                                    } else {
+
+                                        Swal.fire('Submission Failed', saveResponse.data.msg || "Could not record attendance. You might have already submitted today.", 'error');
+                                    }
+                                })
+                                .catch(function(saveError) {
+                                    console.error("Save attendance request failed:", saveError);
+                                    Swal.fire('Request Error', 'An error occurred while submitting your attendance. Please try again.', 'error');
+                                });
+
+                        } else if (checkResponse.data.ret == 0) {
+
                             Swal.fire({
-                                icon: "success",
-                                title: "Attended Successfully!",
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'warning',
+                                title: 'Student ID does not match section',
                                 showConfirmButton: false,
-                                timer: 1500
+                                timer: 2000,
+                                timerProgressBar: true,
                             });
-                            $('#fname').val('');
-                            $('#lname').val('');
-                            $('#student_id').val('');
                         } else {
-                            alert("Error: " + (response.data.msg || "Unknown error"));
+
+                            Swal.fire('Verification Error', checkResponse.data.msg || 'Could not verify section information. Please try again.', 'error');
                         }
                     })
-                    .catch(function(error) {
-                        console.error("Request failed:", error);
-                        alert("Something went wrong!");
-                    });
             });
         });
     </script>
