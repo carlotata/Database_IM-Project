@@ -11,34 +11,21 @@ require_once 'database/delete.php';
     <title>Admin - Student Attendance</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function confirmDelete(student_id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'attendanceAdmin.php?del=' + student_id;
-                }
-            })
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
 
-<body class="text-gray-800 text-center bg-gray-300">
-    <nav class="bg-white shadow fixed-nav">
+<body class="text-gray-800 text-center bg-gray-300" style="font-family: 'Roboto', Arial, sans-serif;">
+
+    <nav class="bg-white sticky top-0 shadow fixed-nav">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-3 relative">
                 <div class="flex items-center space-x-3">
                     <img src="pic/logo.jpg" alt="Logo" class="w-10 h-10 rounded-full shadow-sm object-cover">
                     <div class="text-lg font-bold text-gray-800 hidden sm:block">
-                        <span class="text-sm">ADMIN DASHBOARD [ JOHN CARL AVISO ]</span>
+                        <span class="text-sm">ADMIN DASHBOARD [ JOHN CARL AVISO ] - </span>
+                        <span id="date-time" class="text-sm"></span>
                     </div>
                 </div>
                 <div class="hidden md:flex space-x-4 nav-links" id="navLinks">
@@ -49,7 +36,7 @@ require_once 'database/delete.php';
     </nav>
 
     <div class="container mx-auto p-4 md:p-6 lg:p-8">
-        <div class="mt-4">
+        <div class="mt-4 grid grid-cols-2 gap-4">
             <?php
             try {
                 $sql_sections = "SELECT DISTINCT section FROM userinfo ORDER BY section ASC";
@@ -71,14 +58,17 @@ require_once 'database/delete.php';
                         $currentSectionDisplay = htmlentities($currentSectionName);
 
                         try {
-                            $sql_students = "SELECT student_id, fname, lname, date_attended FROM userinfo WHERE section = :section ORDER BY student_id ASC";
+                            $sql_students = "SELECT student_id, fname, lname, date_attended FROM userinfo WHERE section = :section ORDER BY lname ASC";
                             $query_students = $conn->prepare($sql_students);
                             $query_students->bindParam(':section', $currentSectionName, PDO::PARAM_STR);
                             $query_students->execute();
                             $results = $query_students->fetchAll(PDO::FETCH_ASSOC);
-
-                            echo "<div class='mb-10 bg-white p-4 sm:p-6 rounded-lg shadow-lg'>";
-                            echo "<h2 class='text-center text-xl md:text-2xl font-semibold text-gray-700 mb-4'>Section: " . $currentSectionDisplay . "</h2>";
+                            echo "<div class='mb-5 bg-white p-4 sm:p-6 rounded-lg shadow-lg'>";
+                            echo "<h2 class='text-center text-xl md:text-2xl font-semibold text-gray-700 mb-4'>Section: " . $currentSectionDisplay . " (<span class='font-mono'>" . count($results) . "</span> students)</h2>";
+                            echo "<a href='javascript:void(0);' onclick='confirmClearSection(\"{$currentSectionName}\")' class='text-black-600 hover:text-black-800 transition duration-150 ease-in-out' title='Clear Attendance for Section'><div class='flex justify-center'><i class='fas fa-archive fa-fw'></i></div></a>";
+                            echo "<br>";
+                            echo "<div class='flex justify-end'>";
+                            echo "</div>";
                             echo "<div class='overflow-x-auto'>";
                             echo "<table class='min-w-full table-auto w-full border-collapse border border-gray-300 text-sm'>";
                             echo "<thead>";
@@ -87,7 +77,8 @@ require_once 'database/delete.php';
                             echo "<th class='border px-3 py-3 text-left'>First Name</th>";
                             echo "<th class='border px-3 py-3 text-left'>Last Name</th>";
                             echo "<th class='border px-3 py-3 text-center'>Last Attended Time</th>";
-                            echo "<th class='border px-3 py-3 text-center'>Actions</th>";
+                            echo "<th class='border px-3 py-3 text-center'>Status</th>";
+                            echo "<th class='border px-3 py-3 text-center'>Edit</th>";
                             echo "</tr>";
                             echo "</thead>";
                             echo "<tbody class='text-gray-700'>";
@@ -96,10 +87,17 @@ require_once 'database/delete.php';
                                 foreach ($results as $result) {
                                     $studentId = htmlentities($result['student_id']);
                                     $timeDisplay = 'N/A';
+                                    $statusIcon = '';
                                     if (!empty($result['date_attended'])) {
                                         try {
+                                            $time = '7:00 AM';
                                             $dateTime = new DateTime($result['date_attended']);
                                             $timeDisplay = $dateTime->format('g:i A');
+                                            if ($timeDisplay <= $time) {
+                                                $statusIcon = '<i class="fas fa-times-circle text-red-500 text-lg" title="Late"></i>';
+                                            } else {
+                                                $statusIcon = '<i class="fas fa-check-circle text-green-500 text-lg" title="Present"></i>';
+                                            }
                                         } catch (Exception $dateError) {
                                             $timeDisplay = '<span class="text-gray-400 italic">Invalid Date</span>';
                                         }
@@ -115,6 +113,7 @@ require_once 'database/delete.php';
                                     echo "<td class='border px-3 py-2 text-left'>" . $displayFname . "</td>";
                                     echo "<td class='border px-3 py-2 text-left'>" . $displayLname . "</td>";
                                     echo "<td class='border px-3 py-2 text-center'>" . $timeDisplay . "</td>";
+                                    echo "<td class='border px-3 py-2 text-center'>" . $statusIcon . "</td>";
                                     echo "<td class='border px-3 py-2 text-center whitespace-nowrap'>";
                                     echo "<a href='editPage.php?student_id=" . $studentId . "' class='text-blue-600 hover:text-blue-800 mr-3 transition duration-150 ease-in-out' title='Edit Record'><i class='fas fa-edit fa-fw'></i></a>";
                                     echo "<a href='javascript:void(0);' onclick='confirmDelete(" . $studentId . ")' class='text-red-600 hover:text-red-800 transition duration-150 ease-in-out' title='Delete Record'><i class='fas fa-trash-alt fa-fw'></i></a>";
@@ -145,6 +144,47 @@ require_once 'database/delete.php';
         </div>
     </div>
     </div>
+
+    <?php require_once('database/time.php'); ?>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('pwa-setup/service-worker.js');
+        }
+    </script>
+
+    <script>
+        function confirmDelete(student_id) {
+            Swal.fire({
+                title: 'Permanently delete the user?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'attendanceAdmin.php?del=' + student_id;
+                }
+            })
+        }
+
+        function confirmClearSection(section) {
+            Swal.fire({
+                title: "Clear attendance for section " + section + "?",
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'attendanceAdmin.php?delSection=' + section;
+                }
+            })
+        }
+    </script>
 </body>
 
 </html>

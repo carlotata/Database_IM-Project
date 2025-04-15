@@ -42,7 +42,7 @@ function checkSectionExists($student_id, $section)
 
     if ($db->getState()) {
         $conn = $db->getDb();
-        $stmt = $conn->prepare("SELECT * FROM userinfo WHERE student_id = :student_id AND section = :section AND DATE(date_attended) = CURDATE()");
+        $stmt = $conn->prepare("SELECT * FROM userinfo WHERE student_id = :student_id AND section = :section");
         $stmt->bindParam(':student_id', $student_id);
         $stmt->bindParam(':section', $section);
         $stmt->execute();
@@ -67,15 +67,16 @@ function checkUserExists($student_id)
     return false;
 }
 
-function checkLogins($student_id, $password)
+function checkLogins($student_id, $password, $section)
 {
     $db = new DbController();
 
     if ($db->getState() == true) {
         $conn = $db->getDb();
-        $stmt = $conn->prepare("SELECT * FROM userinfo WHERE student_id = :student_id AND pass = :pass");
+        $stmt = $conn->prepare("SELECT * FROM userinfo WHERE student_id = :student_id AND pass = :pass AND section = :section");
         $stmt->bindParam(':student_id', $student_id);
         $stmt->bindParam(':pass', $password);
+        $stmt->bindParam(':section', $section);
         $stmt->execute();
         return $stmt->rowCount() > 0;
     } else {

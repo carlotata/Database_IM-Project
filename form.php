@@ -2,6 +2,7 @@
 require_once 'database/logs.php';
 stayIndex();
 $loggedInStudentId = $_SESSION['student_id'];
+$loggedInSection = $_SESSION['section'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,65 +13,8 @@ $loggedInStudentId = $_SESSION['student_id'];
     <title>Submit Attendance</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        .shadow-text {
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-
-            color: #1f2937;
-        }
-
-        .form-shadow {
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-
-        }
-
-        .fixed-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-
-
-        }
-
-        body {
-            padding-top: 80px;
-
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-
-                width: 100%;
-
-                position: absolute;
-                top: 100%;
-
-                left: 0;
-                background-color: white;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            .nav-links.active {
-                display: block;
-
-            }
-
-            .nav-links a {
-                display: block;
-
-                padding: 0.75rem 1rem;
-
-                border-bottom: 1px solid #e5e7eb;
-            }
-
-            .nav-links a:last-child {
-                border-bottom: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
 
 <body class="bg-gray-300" style="font-family: 'Roboto', Arial, sans-serif;">
@@ -99,11 +43,11 @@ $loggedInStudentId = $_SESSION['student_id'];
             <span id="date-time" class="text-sm"></span>
         </div>
 
-        <div class="bg-white rounded-lg px-6 py-8 shadow-xl ring-1 ring-gray-900/5 w-full max-w-md space-y-6 form-shadow my-3">
+        <div style="background-color: white; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 6px 12px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08);" class="w-full max-w-md space-y-6 my-3">
             <div class="mb-5">
                 <h1 class="text-2xl font-bold text-center shadow-text text-gray-800">ATTEND TODAY</h1>
             </div>
-            <form id="userForm" class="space-y-5">
+            <form id="userForm" class="space-y-5" action="#" method="POST">
                 <div>
                     <label for="student_id_attendance" class="block text-sm font-medium text-gray-700">Student ID</label>
                     <input type="text" name="student_id" id="student_id_attendance" pattern="\d{8}" maxlength="8"
@@ -128,15 +72,10 @@ $loggedInStudentId = $_SESSION['student_id'];
 
                 <div>
                     <label for="section" class="block text-sm font-medium text-gray-700">Section</label>
-                    <select id="section" name="section"
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="" selected disabled>Select your section</option>
-
-                        <option value="2A">2A</option>
-                        <option value="2B">2B</option>
-                        <option value="2C">2C</option>
-                        <option value="2D">2D</option>
-                    </select>
+                    <input type="text" name="section" id="section_attendance"
+                        value="<?php echo htmlspecialchars($loggedInSection); ?>" readonly
+                        placeholder="e.g., 2A"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md shadow-sm focus:outline-none sm:text-sm cursor-not-allowed" />
                 </div>
 
                 <div class="flex justify-between space-x-3 pt-3">
@@ -149,15 +88,20 @@ $loggedInStudentId = $_SESSION['student_id'];
 
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <?php require_once 'database/time.php'; ?>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('pwa-setup/service-worker.js');
+        }
+    </script>
 
     <script>
         $(document).ready(function() {
             $('#resetButton').on('click', function() {
                 $('#userForm')[0].reset();
                 $('#student_id_attendance').val('<?php echo htmlspecialchars($loggedInStudentId); ?>');
+                $('#section_attendance').val('<?php echo htmlspecialchars($loggedInSection); ?>');
                 $('#section').val("");
             });
 
@@ -165,7 +109,7 @@ $loggedInStudentId = $_SESSION['student_id'];
                 e.preventDefault();
 
                 const student_id = $('#student_id_attendance').val().trim();
-                const section = $('#section').val();
+                const section = $('#section_attendance').val();
                 const fname = $('#fname').val().trim();
                 const lname = $('#lname').val().trim();
 
@@ -189,7 +133,18 @@ $loggedInStudentId = $_SESSION['student_id'];
 
                 axios.post("database/handler.php", checkFrm)
                     .then(function(checkResponse) {
-
+                        if (checkResponse.data.ret == 0) {
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'warning',
+                                title: 'Missing required fields',
+                                showConfirmButton: false,
+                                timer: 1000,
+                                timerProgressBar: true,
+                            });
+                            return;
+                        }
                         if (checkResponse.data.ret == 1) {
 
                             const saveFrm = new FormData();
@@ -198,6 +153,7 @@ $loggedInStudentId = $_SESSION['student_id'];
                             saveFrm.append("fname", fname);
                             saveFrm.append("lname", lname);
                             saveFrm.append("section", section);
+
 
                             axios.post("database/handler.php", saveFrm)
                                 .then(function(saveResponse) {

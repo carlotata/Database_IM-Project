@@ -87,7 +87,7 @@ function checkUser() {
 }
 
 function checkLogin() {
-    if (!isset($_POST['student_id'], $_POST['pass']) || empty($_POST['student_id']) || empty($_POST['pass'])) {
+    if (!isset($_POST['student_id'], $_POST['pass']) || empty($_POST['student_id']) || empty($_POST['pass']) || !isset($_POST['section']) || empty($_POST['section'])) {
         http_response_code(400);
         echo json_encode(array("ret" => -2, "msg" => "Missing required fields for checkLogin."));
         return;
@@ -95,12 +95,14 @@ function checkLogin() {
 
     $student_id = $_POST['student_id'];
     $password = $_POST['pass'];
+    $section = $_POST['section'];
 
-    $ret = checkLogins($student_id, $password);
+    $ret = checkLogins($student_id, $password, $section);
 
     if ($ret == 1) {
         session_regenerate_id(true);
         $_SESSION['student_id'] = $student_id;
+        $_SESSION['section'] = ($section);
     }
 
     echo json_encode(array("ret" => $ret));

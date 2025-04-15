@@ -12,10 +12,10 @@ stayForm();
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
 
-<body class="min-h-screen bg-cover bg-no-repeat flex items-center justify-center p-4 text-white" style="background-image: url('pic/cpc.jpg'); background-position: center bottom;">
+<body class="min-h-screen bg-cover bg-no-repeat flex items-center justify-center p-4 text-white" style="background-image: url('pic/cpc.jpg'); background-position: center bottom; font-family: 'Roboto', Arial, sans-serif;">
     <div class="absolute top-4 right-4">
         <img src="pic/logo.jpg" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-md object-cover">
     </div>
@@ -38,9 +38,23 @@ stayForm();
             <div class="mb-6">
                 <label for="login-password" class="block text-black-700 text-sm font-bold mb-2">Password</label>
                 <input type="password" id="login-password" name="pass"
+                    minlength="5"
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-black mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="******************">
             </div>
+
+            <div class="mb-4">
+                <label for="login-section" class="block text-white text-sm font-bold mb-2">Section</label>
+                <select id="login-section" name="section"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="" disabled selected>Select your section</option>
+                    <option value="2A">2A</option>
+                    <option value="2B">2B</option>
+                    <option value="2C">2C</option>
+                    <option value="2D">2D</option>
+                </select>
+            </div>
+
             <div class="flex items-center justify-between mb-4">
                 <button type="submit" id="login-submit-btn"
                     class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
@@ -69,33 +83,41 @@ stayForm();
     <?php require_once 'database/time.php'; ?>
 
     <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('pwa-setup/service-worker.js');
+        }
+    </script>
+
+    <script>
         $(document).ready(function() {
             const loginForm = document.getElementById('loginFormActual');
             if (loginForm) {
                 loginForm.addEventListener('submit', (e) => {
                     e.preventDefault();
 
-                    const userAdmin = document.getElementById('login-student_idname').value.trim();
-                    const passAdmin = document.getElementById('login-password').value.trim();
+                    const userAdmin = document.getElementById('login-student_idname').value;
+                    const passAdmin = document.getElementById('login-password').value; 
+                    const section = document.getElementById('login-section').value;
 
-                    if (userAdmin === '11111111' && passAdmin === "admin" || passAdmin === "ADMIN") {
+                    if (userAdmin === '11111111' && passAdmin.toLowerCase() === "admin") {
                         Swal.fire({
                             icon: 'success',
                             title: 'Admin Login Success',
                             text: 'Redirecting to Admin Panel...',
-                            showConfirmButton: false,
-                            timer: 1000
-
+                            showConfirmButton: true,
+                            confirmButtonText: 'Access Admin Panel',
+                            confirmButtonColor: '#28a745',
+                            allowOutsideClick: false
                         }).then(() => {
                             window.location.href = "attendanceAdmin.php";
                         });
-                        return;
+                        return; 
                     }
 
                     const student_idname = userAdmin;
-                    const password = passAdmin;
+                    const password = passAdmin; 
 
-                    if (!student_idname || !password) {
+                    if (!student_idname || !password || !section) {
                         Swal.fire({
                             toast: true,
                             position: 'top-end',
@@ -112,6 +134,7 @@ stayForm();
                     frm.append("method", "checkLogin");
                     frm.append("student_id", student_idname);
                     frm.append("pass", password);
+                    frm.append("section", section);
 
                     axios.post("database/handler.php", frm)
                         .then(function(response) {
@@ -120,14 +143,15 @@ stayForm();
                                 Swal.fire({
                                     toast: true,
                                     position: 'top-end',
-                                    icon: 'warning',
-                                    title: 'Student ID or Password is wrong',
+                                    icon: 'error',
+                                    title: 'Credentials do not match',
                                     showConfirmButton: false,
                                     timer: 1000,
                                     timerProgressBar: true,
                                 });
                                 document.getElementById('login-student_idname').value = '';
                                 document.getElementById('login-password').value = '';
+                                document.getElementById('login-section').value = '';
                             } else if (response.data.ret == 1) {
                                 Swal.fire({
                                     icon: 'success',

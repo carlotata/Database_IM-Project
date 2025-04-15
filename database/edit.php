@@ -39,7 +39,7 @@ if (isset($_POST['update'])) {
     }
 
     try {
-        $sql = "UPDATE userinfo SET fname = :fname, lname = :lname, section = :section, student_id = :new_student_id, date_attended = NOW() WHERE student_id = :student_id_to_edit";
+        $sql = "UPDATE userinfo SET fname = :fname, lname = :lname, section = :section, student_id = :new_student_id WHERE student_id = :student_id_to_edit";
         $query = $conn->prepare($sql);
 
         $query->bindParam(':fname', $fname, PDO::PARAM_STR);

@@ -1,28 +1,5 @@
 <?php
-require_once 'database/delete.php';
-require_once 'database/dbcontroller.php';
-
-$sections = [];
-$message = '';
-$message_type = 'error';
-
-try {
-    $db = new DbController();
-    $conn = $db->getDb();
-
-    $sql_sections = "SELECT DISTINCT section
-                     FROM userinfo
-                     WHERE date(date_attended) = curdate()
-                     ORDER BY section ASC";
-    $query_sections = $conn->prepare($sql_sections);
-    $query_sections->execute();
-    $sections = $query_sections->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $message = "Database Error: Could not retrieve attendance data.";
-    error_log("Database Error on student attendance view (initial query): " . $e->getMessage());
-    $sections = [];
-}
-
+require_once 'database/logs.php';
 ?>
 
 <!DOCTYPE html>
@@ -35,11 +12,12 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
 
 <body class="bg-gray-300" style="font-family: 'Roboto', Arial, sans-serif;">
 
-    <nav class="bg-white shadow fixed-nav">
+    <nav class="bg-white sticky top-0 shadow fixed-nav">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-3 relative">
                 <div class="flex items-center space-x-3">
@@ -49,13 +27,12 @@ try {
                     </div>
                 </div>
                 <div class="hidden md:flex space-x-4 nav-links" id="navLinks">
+                    <a href="#2A" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">2A</a>
+                    <a href="#2B" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">2B</a>
+                    <a href="#2C" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">2C</a>
+                    <a href="#2D" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">2D</a>
                     <a href="signup.php" class="text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">Create Account</a>
-                    <a href="index.php" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Log In</a>
-                </div>
-                <div class="md:hidden">
-                    <button id="mobileMenuButton" class="text-gray-600 hover:text-gray-800 focus:outline-none">
-                        <i class="fas fa-bars fa-lg"></i>
-                    </button>
+                    <a href="index.php" class="text-gray-600 hover:text-blue-800 px-3 py-2 rounded-md text-sm font-medium">Log In</a>
                 </div>
             </div>
         </div>
@@ -83,12 +60,7 @@ try {
                 $results = [];
 
                 try {
-                    $sql_check = "SELECT COUNT(*) as count
-                                  FROM userinfo
-                                  WHERE section = :section
-                                    AND date(date_attended) = curdate()
-                                    AND fname IS NOT NULL AND TRIM(fname) <> ''
-                                    AND lname IS NOT NULL AND TRIM(lname) <> ''";
+                    $sql_check = "SELECT COUNT(*) as count FROM userinfo WHERE section = :section AND date(date_attended) = curdate() AND fname IS NOT NULL AND TRIM(fname) <> '' AND lname IS NOT NULL AND TRIM(lname) <> '' ORDER BY lname ASC";
                     $query_check = $conn->prepare($sql_check);
                     $query_check->bindParam(':section', $currentSection, PDO::PARAM_STR);
                     $query_check->execute();
@@ -104,73 +76,79 @@ try {
                 if ($students_found_for_section) {
                     $any_section_displayed = true;
         ?>
-                    <div class="mb-8 bg-white p-4 rounded shadow-md">
-                        <h2 class='text-center text-xl font-semibold text-gray-700 mb-4'>Section: <?php echo htmlentities($currentSection); ?></h2>
-                        <div class="overflow-x-auto">
-                            <table class='table-auto w-full border-collapse border border-gray-300'>
-                                <thead>
-                                    <tr class='bg-gray-100 text-gray-600 uppercase text-sm leading-normal'>
-                                        <th class='border px-3 py-2 text-center'>No.</th>
-                                        <th class='border px-3 py-2 text-left'>First Name</th>
-                                        <th class='border px-3 py-2 text-left'>Last Name</th>
-                                        <th class='border px-3 py-2 text-center'>Time In</th>
-                                        <th class='border px-3 py-2 text-center'>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-gray-700 text-sm">
-                                    <?php
-                                    try {
-                                        $sql_students = "SELECT fname, lname, date_attended
+                    <div id="<?php echo $currentSection; ?>"><br>
+                        <div class="my-6 bg-white p-4 rounded shadow-md">
+                            <h2 class='text-center text-xl font-semibold text-gray-700 my-2'>Section: <?php echo htmlentities($currentSection); ?></h2>
+                            <div class="overflow-x-auto">
+                                <table class='table-auto w-full border-collapse border border-gray-300'>
+                                    <thead>
+                                        <tr class='bg-gray-100 text-gray-600 uppercase text-sm leading-normal'>
+                                            <th class='border px-3 py-2 text-center'>No.</th>
+                                            <th class='border px-3 py-2 text-left'>First Name</th>
+                                            <th class='border px-3 py-2 text-left'>Last Name</th>
+                                            <th class='border px-3 py-2 text-center'>Time In</th>
+                                            <th class='border px-3 py-2 text-center'>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700 text-sm">
+                                        <?php
+                                        try {
+                                            $sql_students = "SELECT fname, lname, date_attended
                                                          FROM userinfo
                                                          WHERE section = :section
                                                            AND date(date_attended) = curdate()
                                                            AND fname IS NOT NULL AND TRIM(fname) <> ''
                                                            AND lname IS NOT NULL AND TRIM(lname) <> ''
                                                          ORDER BY lname ASC, fname ASC";
-                                        $query_students = $conn->prepare($sql_students);
-                                        $query_students->bindParam(':section', $currentSection, PDO::PARAM_STR);
-                                        $query_students->execute();
-                                        $results = $query_students->fetchAll(PDO::FETCH_ASSOC);
-                                        $cnt = 1;
+                                            $query_students = $conn->prepare($sql_students);
+                                            $query_students->bindParam(':section', $currentSection, PDO::PARAM_STR);
+                                            $query_students->execute();
+                                            $results = $query_students->fetchAll(PDO::FETCH_ASSOC);
+                                            $cnt = 1;
 
-                                        if ($query_students->rowCount() > 0) {
-                                            foreach ($results as $result) {
-                                                $timeIn = 'N/A';
-                                                if (!empty($result['date_attended'])) {
-                                                    try {
-                                                        $dateTime = new DateTime($result['date_attended']);
-                                                        $timeIn = $dateTime->format('g:i A');
-                                                    } catch (Exception $dateError) {
-                                                        $timeIn = '<span class="text-gray-400 italic">Invalid Time</span>';
+                                            if ($query_students->rowCount() > 0) {
+                                                foreach ($results as $result) {
+                                                    $timeIn = 'N/A';
+                                                    if (!empty($result['date_attended'])) {
+                                                        try {
+                                                            $time = '7:00AM';
+                                                            $dateTime = new DateTime($result['date_attended']);
+                                                            $timeIn = $dateTime->format('g:i A');
+                                                            if ($timeIn <=  $time) {
+                                                                $statusIcon = '<i class="fas fa-times-circle text-red-500 text-lg" title="Late"></i>';
+                                                            } else {
+                                                                $statusIcon = '<i class="fas fa-check-circle text-green-500 text-lg" title="Present"></i>';
+                                                            }
+                                                        } catch (Exception $dateError) {
+                                                            $timeIn = '<span class="text-gray-400 italic">Invalid Time</span>';
+                                                        }
                                                     }
-                                                }
-                                                $statusIcon = '<i class="fas fa-check-circle text-green-500 text-lg" title="Present"></i>';
-                                    ?>
-                                                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                                    <td class="border px-3 py-2 text-center"><?php echo $cnt; ?></td>
-                                                    <td class="border px-3 py-2 text-left"><?php echo htmlentities($result['fname']); ?></td>
-                                                    <td class="border px-3 py-2 text-left"><?php echo htmlentities($result['lname']); ?></td>
-                                                    <td class="border px-3 py-2 text-center"><?php echo $timeIn; ?></td>
-                                                    <td class="border px-3 py-2 text-center"><?php echo $statusIcon; ?></td>
-                                                </tr>
-                                        <?php
-                                                $cnt++;
-                                            }
-                                        }
-                                    } catch (PDOException $e) {
-                                        error_log("Error fetching student details for section {$currentSection} on public view: " . $e->getMessage());
                                         ?>
-                                        <tr>
-                                            <td colspan="5" class="border px-4 py-3 text-center text-red-500 font-semibold">Error loading attendance data for this section.</td>
-                                        </tr>
-                                    <?php
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
+                                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                                        <td class="border px-3 py-2 text-center"><?php echo $cnt; ?></td>
+                                                        <td class="border px-3 py-2 text-left"><?php echo htmlentities($result['fname']); ?></td>
+                                                        <td class="border px-3 py-2 text-left"><?php echo htmlentities($result['lname']); ?></td>
+                                                        <td class="border px-3 py-2 text-center"><?php echo $timeIn; ?></td>
+                                                        <td class="border px-3 py-2 text-center"><?php echo $statusIcon; ?></td>
+                                                    </tr>
+                                            <?php
+                                                    $cnt++;
+                                                }
+                                            }
+                                        } catch (PDOException $e) {
+                                            error_log("Error fetching student details for section {$currentSection} on public view: " . $e->getMessage());
+                                            ?>
+                                            <tr>
+                                                <td colspan="5" class="border px-4 py-3 text-center text-red-500 font-semibold">Error loading attendance data for this section.</td>
+                                            </tr>
+                                        <?php
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-            <?php
+                <?php
                 }
             }
         }
@@ -182,17 +160,22 @@ try {
             } else {
                 $no_data_message = "No students have submitted attendance yet today.";
             }
-            ?>
-            <div class="text-center text-gray-600 mt-10">
-                <i class="fas fa-info-circle fa-3x mb-3"></i>
-                <p class="text-xl"><?php echo $no_data_message; ?></p>
-            </div>
-        <?php
+                ?>
+                <div class="text-center text-gray-600 mt-10">
+                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                    <p class="text-xl"><?php echo $no_data_message; ?></p>
+                </div>
+            <?php
         }
-        ?>
+            ?>
 
-    </div>
-    <?php require_once('database/time.php'); ?>
+            </div>
+            <?php require_once('database/time.php'); ?>
+            <script>
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('pwa-setup/service-worker.js');
+                }
+            </script>
 </body>
 
 </html>
