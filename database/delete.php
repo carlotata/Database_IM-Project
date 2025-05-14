@@ -5,9 +5,9 @@ session_start();
 $db = new Database(); 
 $conn = $db->getDb();
 
-$sql_delete_old = "DELETE FROM userinfo WHERE date(date_attended) < curdate()";
+$sql_delete_old = "UPDATE userinfo SET fname = NULL, lname = NULL, date_attended = NULL WHERE date_attended < NOW() - INTERVAL 1 DAY";
 $query_delete_old = $conn->prepare($sql_delete_old);
-$query_delete_old->execute();
+$query_delete_old-> execute();
 
 if (isset($_GET['del']) && !empty($_GET['del'])) {
     $student_id = intval($_GET['del']);
