@@ -12,7 +12,6 @@ require_once 'database/delete.php';
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
 
@@ -145,6 +144,7 @@ require_once 'database/delete.php';
     </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php require_once('database/time.php'); ?>
     <script>
         if ('serviceWorker' in navigator) {
@@ -177,7 +177,7 @@ require_once 'database/delete.php';
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: 'Yes, clear it!'
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = 'attendanceAdmin.php?delSection=' + section;

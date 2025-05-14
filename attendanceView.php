@@ -171,11 +171,13 @@ require_once 'database/logs.php';
 
             </div>
             <?php require_once('database/time.php'); ?>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script>
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('pwa-setup/service-worker.js');
                 }
             </script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

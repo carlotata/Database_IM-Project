@@ -12,7 +12,6 @@ $loggedInSection = $_SESSION['section'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Attendance</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
@@ -88,6 +87,7 @@ $loggedInSection = $_SESSION['section'];
 
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <?php require_once 'database/time.php'; ?>
     <script>

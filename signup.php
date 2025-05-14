@@ -10,7 +10,6 @@ stayForm();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Creation</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="manifest" href="pwa-setup/manifest.json">
 </head>
@@ -54,7 +53,7 @@ stayForm();
                     <input type="password" id="signup-password" name="password"
                         minlength="5"
                         class="shadow appearance-none border rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Minimum 6 characters">
+                        placeholder="Minimum 5 characters">
                 </div>
                 <div class="w-1/2 pl-2">
                     <label for="signup-confirm-password" class="block text-white text-sm font-bold mb-2">Confirm Password</label>
@@ -86,6 +85,7 @@ stayForm();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <?php require_once 'database/time.php'; ?>
 
